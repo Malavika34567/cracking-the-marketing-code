@@ -1,0 +1,43 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+from datetime import datetime, timedelta
+
+# Generate sample dataset
+date_rng = pd.date_range(start='1/1/2020', end='1/1/2025', freq='M')
+stock_prices = np.sin(np.linspace(0, 20, len(date_rng))) + np.random.normal(0, 0.5, len(date_rng))
+
+df = pd.DataFrame({'date': date_rng, 'price': stock_prices})
+df['date'] = pd.to_datetime(df['date'])
+df.set_index('date', inplace=True)
+
+# Feature engineering
+df['month'] = df.index.month
+df['year'] = df.index.year
+df['prev_price'] = df['price'].shift(1)
+df.dropna(inplace=True)
+
+# Splitting data
+X = df[['month', 'year', 'prev_price']]
+y = df['price']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Model training
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Predictions
+y_pred = model.predict(X_test)
+mse = mean_squared_error(y_test, y_pred)
+
+print(f'Mean Squared Error: {mse}')
+
+# Plot results
+plt.figure(figsize=(10, 5))
+plt.plot(df.index, df['price'], label='Actual Prices', color='blue')
+plt.plot(X_test.index, y_pred, label='Predicted Prices', color='red')
+plt.legend()
+plt.show()
